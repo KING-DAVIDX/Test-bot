@@ -2,6 +2,7 @@ import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
 import pino from "pino";
+import express from "express";
 import { createClient } from "@supabase/supabase-js";
 import {
   default as makeWASocket,
@@ -19,6 +20,7 @@ const __dirname = path.dirname(__filename);
 const supabase = createClient(config.DBURL, config.SUPKEY);
 const mutex = new Mutex();
 let sock;
+let logs = [];
 
 async function downloadSessionFiles(destDir) {
   const listRes = await supabase.storage.from("session").list(config.SESSION);
@@ -60,6 +62,7 @@ async function start() {
 
     sock.ev.on("messages.upsert", m => {
       try {
+        logs.push(m);
         console.log(JSON.stringify(m, null, 2));
       } catch (e) {
         console.error(e && e.stack ? e.stack : e);
@@ -74,7 +77,7 @@ async function start() {
           await delay(1000);
           start().catch(() => {});
         } else {
-          try { sock.end(); } catch (e) {}
+          try { sock.end(); } catch {}
         }
       }
     });
@@ -82,5 +85,15 @@ async function start() {
     release();
   }
 }
+
+const app = express();
+
+app.get("/structure", (req, res) => {
+  res.json(logs);
+});
+
+app.listen(3000, () => {
+  console.log("Server running on port 3000");
+});
 
 start().catch(err => console.error(err && err.stack ? err.stack : err));
