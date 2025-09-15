@@ -1,0 +1,14 @@
+{
+  "name": "whatsapp-bot",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.0.0",
+    "async-mutex": "^0.4.0",
+    "baileys": "latest",
+    "pino": "^8.0.0"
+  }
+}
