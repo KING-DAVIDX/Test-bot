@@ -3,6 +3,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import pino from "pino";
 import express from "express";
+import chalk from "chalk";
 import { createClient } from "@supabase/supabase-js";
 import {
   default as makeWASocket,
@@ -65,11 +66,76 @@ async function start() {
         for (const msg of messages) {
           const s = await serialize(sock, msg);
           if (!s) continue;
+
+          // skip distribution key logs
+          if (s.type === "senderKeyDistributionMessage") continue;
+
+          // resolve group name if group
+          let fromName = s.pushName || s.participant || "Unknown";
+          if (s.isGroup) {
+            try {
+              const meta = await sock.groupMetadata(s.from);
+              fromName = `${meta.subject} | ${s.pushName || s.participant}`;
+            } catch {
+              fromName = `${s.from} | ${s.pushName || s.participant}`;
+            }
+          }
+
+          // build refined log without emojis
+          let contentLog = "";
+          switch (s.type) {
+            case "conversation":
+            case "extendedTextMessage":
+              contentLog = chalk.white(`Text: ${s.text}`);
+              break;
+            case "imageMessage":
+              contentLog = chalk.blue(`Image${s.text ? " | " + s.text : ""}`);
+              break;
+            case "videoMessage":
+              contentLog = chalk.magenta(`Video${s.text ? " | " + s.text : ""}`);
+              break;
+            case "audioMessage":
+              contentLog = chalk.cyan(`Audio`);
+              break;
+            case "stickerMessage":
+              contentLog = chalk.green(`Sticker`);
+              break;
+            case "documentMessage":
+            case "documentWithCaptionMessage":
+              contentLog = chalk.yellow(
+                `Document${s.text ? " | " + s.text : ""}`
+              );
+              break;
+            case "reactionMessage":
+              contentLog = chalk.red(`Reaction: ${s.reaction?.text}`);
+              break;
+            case "pollCreationMessageV3":
+              contentLog = chalk.greenBright(
+                `Poll: ${s.poll?.name} [${s.poll?.options?.join(", ")}]`
+              );
+              break;
+            case "pollUpdateMessage":
+              contentLog = chalk.greenBright(`Poll Update`);
+              break;
+            case "protocolMessage":
+              contentLog = chalk.gray(`Protocol Message`);
+              break;
+            default:
+              contentLog = chalk.gray(`${s.type || "unknown"} message`);
+          }
+
           console.log(
-            `[${s.fromMe ? "ME" : s.pushName || s.participant}] (${s.from}) → ${s.text || s.type}`
+            chalk.bold(`[${s.fromMe ? "ME" : fromName}]`) +
+              chalk.dim(` (${s.from}) → `) +
+              contentLog
           );
+
           if (s.quoted) {
-            console.log(` ↳ quoted: ${s.quoted.text || s.quoted.type}`);
+            console.log(
+              chalk.dim(
+                `   ↳ quoted: ${s.quoted.text || "[" + s.quoted.type + "]"}`
+              )
+            );
           }
         }
       } catch (e) {
@@ -80,9 +146,9 @@ async function start() {
     sock.ev.on("connection.update", async update => {
       const { connection, lastDisconnect } = update;
       if (connection === "open") {
-        console.log("✅ Connection successful");
+        console.log(chalk.greenBright("Connection successful"));
         try {
-          await sock.sendMessage(sock.user.id, { text: "✅ Bot connected successfully" });
+          await sock.sendMessage(sock.user.id, { text: "Bot connected successfully" });
         } catch (err) {
           console.error("Failed to send success message:", err);
         }
@@ -105,11 +171,11 @@ async function start() {
 const app = express();
 
 app.get("/", (req, res) => {
-  res.send("✅ WhatsApp bot server is running");
+  res.send("WhatsApp bot server is running");
 });
 
 app.listen(3000, () => {
-  console.log("🚀 Server running on http://localhost:3000");
+  console.log(chalk.blue("Server running on http://localhost:3000"));
 });
 
 start().catch(err => console.error(err && err.stack ? err.stack : err));
