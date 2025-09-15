@@ -14,13 +14,13 @@ import {
 } from "baileys";
 import { Mutex } from "async-mutex";
 import config from "./config.js";
+import { serialize } from "./lib/serialize.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const supabase = createClient(config.DBURL, config.SUPKEY);
 const mutex = new Mutex();
 let sock;
-let logs = [];
 
 async function downloadSessionFiles(destDir) {
   const listRes = await supabase.storage.from("session").list(config.SESSION);
@@ -60,10 +60,18 @@ async function start() {
       await saveCreds();
     });
 
-    sock.ev.on("messages.upsert", m => {
+    sock.ev.on("messages.upsert", async ({ messages }) => {
       try {
-        logs.push(m);
-        console.log(JSON.stringify(m, null, 2));
+        for (const msg of messages) {
+          const s = await serialize(sock, msg);
+          if (!s) continue;
+          console.log(
+            `[${s.fromMe ? "ME" : s.pushName || s.participant}] (${s.from}) → ${s.text || s.type}`
+          );
+          if (s.quoted) {
+            console.log(` ↳ quoted: ${s.quoted.text || s.quoted.type}`);
+          }
+        }
       } catch (e) {
         console.error(e && e.stack ? e.stack : e);
       }
@@ -71,6 +79,14 @@ async function start() {
 
     sock.ev.on("connection.update", async update => {
       const { connection, lastDisconnect } = update;
+      if (connection === "open") {
+        console.log("✅ Connection successful");
+        try {
+          await sock.sendMessage(sock.user.id, { text: "✅ Bot connected successfully" });
+        } catch (err) {
+          console.error("Failed to send success message:", err);
+        }
+      }
       if (connection === "close") {
         const code = lastDisconnect?.error?.output?.statusCode;
         if ([DisconnectReason.connectionLost, DisconnectReason.connectionClosed, DisconnectReason.restartRequired].includes(code)) {
@@ -88,12 +104,12 @@ async function start() {
 
 const app = express();
 
-app.get("/structure", (req, res) => {
-  res.json(logs);
+app.get("/", (req, res) => {
+  res.send("✅ WhatsApp bot server is running");
 });
 
 app.listen(3000, () => {
-  console.log("Server running on port 3000");
+  console.log("🚀 Server running on http://localhost:3000");
 });
 
 start().catch(err => console.error(err && err.stack ? err.stack : err));
