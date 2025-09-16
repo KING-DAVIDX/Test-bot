@@ -121,13 +121,11 @@ async function start() {
               contentLog = chalk.gray(`Protocol Message`);
               break;
             default:
-              contentLog = chalk.gray(`${s.type || "unknown"} message`);
+              contentLog = chalk.gray(`${s.type}`);
           }
 
           console.log(
-            chalk.bold(`[${s.fromMe ? "ME" : fromName}]`) +
-              chalk.dim(` (${s.from}) → `) +
-              contentLog
+            chalk.bold(`[${s.fromMe ? "ME" : fromName}]`) + contentLog
           );
 
           if (s.quoted) {
