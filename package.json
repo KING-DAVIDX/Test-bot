@@ -11,6 +11,7 @@
     "baileys": "6.7.19",
     "chalk": "*",
     "express": "^4.21.1",
+    "node-cache": "5.1.2",
     "pino": "^8.0.0",
     "sqlite3": "^5.1.7",
     "sqlite": "^4.1.2"
