@@ -16,6 +16,7 @@ import {
 import { Mutex } from "async-mutex";
 import config from "./config.js";
 import { serialize } from "./lib/serialize.js";
+import { initStore } from "./lib/store.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -69,6 +70,9 @@ async function start() {
 
           // skip distribution keys & protocol messages
           if (s.type === "senderKeyDistributionMessage" || s.type === "protocolMessage") continue;
+
+          // --- save to sqlite automatically ---
+          await writeMessage(s);
 
           // resolve names
           let fromName;
@@ -198,5 +202,7 @@ app.get("/", (req, res) => {
 app.listen(3000, () => {
   console.log(chalk.blue("Server running on http://localhost:3000"));
 });
+
+await initStore();
 
 start().catch(err => console.error(err && err.stack ? err.stack : err));
