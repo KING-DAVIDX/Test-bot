@@ -1,3 +1,4 @@
+import util from "util";
 import nexus from "../lib/plugin.js";
 
 nexus(
@@ -16,6 +17,27 @@ nexus(
   }
 );
 
+nexus(
+  {
+    on: "text",
+    Category: "owner",
+    Info: "Evaluate JavaScript code",
+    React: "💻",
+    Listen: "$"
+  },
+  async (m) => {
+    const code = m.text.slice(1).trim(); // remove "$"
+    if (!code) return m.reply("No code provided.");
+
+    try {
+      let result = await eval(`(async () => { ${code} })()`);
+      result = typeof result === "string" ? result : util.inspect(result, { depth: null });
+      await m.reply(result);
+    } catch (err) {
+      await m.reply(String(err));
+    }
+  }
+);
 nexus(
   {
     name: "ping",
