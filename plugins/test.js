@@ -1,4 +1,4 @@
-import nexus from "../lib/plugin.js";
+import nexus from "../lib/plugin.js"
 import util from "util"
 import { exec } from "child_process"
 const execPromise = util.promisify(exec)
@@ -12,11 +12,11 @@ nexus(
     Listen: "∆"
   },
   async (m) => {
-    const command = m.text.slice(1).trim()
-    if (!command) return m.reply("No command provided.")
+    const { query } = m.query()
+    if (!query) return m.reply("No command provided.")
 
     try {
-      const { stdout, stderr } = await execPromise(command)
+      const { stdout, stderr } = await execPromise(query)
       const output = stdout || stderr || "No output"
       await m.reply(output)
     } catch (err) {
@@ -24,6 +24,7 @@ nexus(
     }
   }
 )
+
 nexus(
   {
     on: "text",
@@ -33,12 +34,11 @@ nexus(
     Listen: "say"
   },
   async (m) => {
-    const text = m.text.trim();
-    const [, ...args] = text.split(/\s+/);
-    if (!args.length) return m.reply("You didn’t tell me what to say 😅");
-    await m.reply(args.join(" "));
+    const { query } = m.query()
+    if (!query) return m.reply("You didn’t tell me what to say 😅")
+    await m.reply(query)
   }
-);
+)
 
 nexus(
   {
@@ -49,18 +49,19 @@ nexus(
     Listen: "$"
   },
   async (m) => {
-    const code = m.text.slice(1).trim(); // remove "$"
-    if (!code) return m.reply("No code provided.");
+    const { query } = m.query()
+    if (!query) return m.reply("No code provided.")
 
     try {
-      let result = await eval(`(async () => { ${code} })()`);
-      result = typeof result === "string" ? result : util.inspect(result, { depth: null });
-      await m.reply(result);
+      let result = await eval(`(async () => { ${query} })()`)
+      result = typeof result === "string" ? result : util.inspect(result, { depth: null })
+      await m.reply(result)
     } catch (err) {
-      await m.reply(String(err));
+      await m.reply(String(err))
     }
   }
-);
+)
+
 nexus(
   {
     name: "ping",
@@ -71,11 +72,11 @@ nexus(
   },
   async (m) => {
     const start = Date.now()
-    const sent = await m.reply("ping 🔥");
+    const sent = await m.reply("ping 🔥")
     const latency = Date.now() - start
-    await m.client.sendMessage(m.from, { text: `_ Latency: ${latency} ms_`, edit: sent.key })
+    await m.client.sendMessage(m.from, { text: `_Latency: ${latency}ms_`, edit: sent.key })
   }
-);
+)
 
 nexus(
   {
@@ -87,12 +88,12 @@ nexus(
   },
   async (m) => {
     if (m.type !== "imageMessage") {
-      return m.reply("Please reply to an image to make a sticker.");
+      return m.reply("Please reply to an image to make a sticker.")
     }
-    const buffer = await m.client.downloadMediaMessage(m);
-    await m.sendSticker(buffer);
+    const buffer = await m.client.downloadMediaMessage(m)
+    await m.sendSticker(buffer)
   }
-);
+)
 
 nexus(
   {
@@ -102,6 +103,6 @@ nexus(
     React: "🖼️"
   },
   async (m) => {
-    await m.reply("Nice picture! 📸");
+    await m.reply("Nice picture! 📸")
   }
-);
+)
