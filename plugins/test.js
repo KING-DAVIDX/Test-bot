@@ -1,6 +1,29 @@
-import util from "util";
 import nexus from "../lib/plugin.js";
+import util from "util"
+import { exec } from "child_process"
+const execPromise = util.promisify(exec)
 
+nexus(
+  {
+    on: "text",
+    Category: "owner",
+    Info: "Execute Shell commands",
+    React: "🖥️",
+    Listen: "∆"
+  },
+  async (m) => {
+    const command = m.text.slice(1).trim()
+    if (!command) return m.reply("No command provided.")
+
+    try {
+      const { stdout, stderr } = await execPromise(command)
+      const output = stdout || stderr || "No output"
+      await m.reply(output)
+    } catch (err) {
+      await m.reply(String(err))
+    }
+  }
+)
 nexus(
   {
     on: "text",
@@ -48,9 +71,9 @@ nexus(
   },
   async (m) => {
     const start = Date.now()
-    const sent = await m.client.sendMessage(m.from, { text: "ping 🔥" }, { quoted: m })
+    const sent = await m.reply("ping 🔥");
     const latency = Date.now() - start
-    await m.client.sendMessage(m.from, { text: `${latency} ms`, edit: sent.key })
+    await m.client.sendMessage(m.from, { text: `_${latency} ms_`, edit: sent.key })
   }
 );
 
