@@ -111,7 +111,7 @@ nexus(
   },
   async (m) => {
     try {
-      const { stdout, stderr } = await execPromise("git pull")
+      const { stdout, stderr } = await execPromise("git pull origin main")
       await m.reply(stdout || stderr || "No output")
     } catch (err) {
       await m.reply(String(err))
