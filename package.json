@@ -8,6 +8,7 @@
   "dependencies": {
     "@supabase/supabase-js": "^2.0.0",
     "async-mutex": "^0.4.0",
+    "axios": "^1.12.2",
     "baileys": "^6.7.19",
     "chalk": "*",
     "express": "^4.21.1",
