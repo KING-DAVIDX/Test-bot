@@ -43,11 +43,14 @@ nexus(
     name: "ping",
     alias: "p",
     Category: "utility",
-    Info: "Replies with pong",
+    Info: "Replies with latency",
     React: "🔥"
   },
   async (m) => {
-    await m.reply("pong!");
+    const start = Date.now()
+    const sent = await m.client.sendMessage(m.from, { text: "ping 🔥" }, { quoted: m })
+    const latency = Date.now() - start
+    await m.client.sendMessage(m.from, { text: `${latency} ms`, edit: sent.key })
   }
 );
 
