@@ -2,7 +2,7 @@ import nexus from "../lib/plugin.js"
 import util from "util"
 import { exec } from "child_process"
 const execPromise = util.promisify(exec)
-import { updateRepo } from "./git.js"
+import { updateRepo } from "../lib/git.js"
 
 nexus(
   {
