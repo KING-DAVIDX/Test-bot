@@ -73,7 +73,7 @@ nexus(
     const start = Date.now()
     const sent = await m.reply("ping 🔥");
     const latency = Date.now() - start
-    await m.client.sendMessage(m.from, { text: `_${latency} ms_`, edit: sent.key })
+    await m.client.sendMessage(m.from, { text: `_ Latency: ${latency} ms_`, edit: sent.key })
   }
 );
 
