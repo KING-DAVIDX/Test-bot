@@ -2,6 +2,7 @@ import nexus from "../lib/plugin.js"
 import util from "util"
 import { exec } from "child_process"
 const execPromise = util.promisify(exec)
+import { updateRepo } from "./git.js"
 
 nexus(
   {
@@ -106,15 +107,23 @@ nexus(
   {
     name: "gitpull",
     Category: "system",
-    Info: "Pull latest changes from git",
+    Info: "Update bot files from GitHub (raw, with commit check)",
     React: "📥"
   },
   async (m) => {
     try {
-      const { stdout, stderr } = await execPromise("git pull origin main")
-      await m.reply(stdout || stderr || "No output")
+      const result = await updateRepo()
+
+      if (result.upToDate) {
+        await m.reply("✅ Bot is up to date")
+      } else {
+        const files = result.updated.length
+          ? result.updated.join("\n")
+          : "No files changed"
+        await m.reply(`📥 Updated files:\n${files}`)
+      }
     } catch (err) {
-      await m.reply(String(err))
+      await m.reply("❌ Update failed:\n" + String(err))
     }
   }
 )
