@@ -35,14 +35,19 @@ nexus(
   async (m) => {
     const { query } = m.query()
     if (!query) return m.reply("No code provided.")
+
     try {
       const result = await eval(`(async () => {
-        return await (async () => {
-          ${query}
-        })()
+        ${query}
       })()`)
-      const output = typeof result === "string" ? result : util.inspect(result, { depth: null })
-      await m.reply(output)
+      
+      // Only reply with result if user code returned something
+      if (result !== undefined) {
+        const output = typeof result === "string"
+          ? result
+          : util.inspect(result, { depth: null })
+        await m.reply(output)
+      }
     } catch (err) {
       await m.reply(String(err))
     }
