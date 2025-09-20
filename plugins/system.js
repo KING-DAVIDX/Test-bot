@@ -36,9 +36,13 @@ nexus(
     const { query } = m.query()
     if (!query) return m.reply("No code provided.")
     try {
-      let result = await eval(`(async () => { ${query} })()`)
-      result = typeof result === "string" ? result : util.inspect(result, { depth: null })
-      await m.reply(result)
+      const result = await eval(`(async () => {
+        return await (async () => {
+          ${query}
+        })()
+      })()`)
+      const output = typeof result === "string" ? result : util.inspect(result, { depth: null })
+      await m.reply(output)
     } catch (err) {
       await m.reply(String(err))
     }
